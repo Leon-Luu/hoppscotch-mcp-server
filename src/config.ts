@@ -31,7 +31,7 @@ export enum ApiType {
  * HOPPSCOTCH_API_URL to bypass this derivation entirely.
  */
 export function deriveApiUrl(serverUrl: string, explicitApiUrl?: string): string {
-  if (explicitApiUrl) return explicitApiUrl;
+  if (explicitApiUrl) return explicitApiUrl.replace(/\/+$/, '');
   if (isCloudUrl(serverUrl)) return CLOUD_API_URL;
   // Build via the URL API (not string concatenation) so a query string or
   // fragment can never corrupt the derived path. serverUrl is validated by
@@ -107,7 +107,7 @@ export function assertValidServerUrl(serverUrl: string): void {
 const configSchema = z.object({
   serverUrl: z.string().url('HOPPSCOTCH_SERVER_URL must be a valid URL').default(CLOUD_SERVER_URL),
 
-  // Derived from serverUrl, not exposed as env vars
+  // Derived from serverUrl or an explicit API URL
   apiUrl: z.string(),
   apiType: z.nativeEnum(ApiType),
 
@@ -179,7 +179,7 @@ export function loadConfig(): Config {
  * Get full GraphQL endpoint URL
  */
 export function getGraphqlUrl(config: Config): string {
-  return `${config.apiUrl}/graphql`;
+  return `${config.apiUrl.replace(/\/+$/, '')}/graphql`;
 }
 
 /**

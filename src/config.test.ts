@@ -61,6 +61,12 @@ describe('deriveApiUrl', () => {
       'https://custom-api.example.com'
     );
   });
+
+  it('strips trailing slashes from an explicit API URL', () => {
+    expect(deriveApiUrl('https://my-sh.example.com', 'https://api.my-sh.example.com/')).toBe(
+      'https://api.my-sh.example.com'
+    );
+  });
 });
 
 describe('loadConfig', () => {
@@ -180,6 +186,13 @@ describe('getGraphqlUrl', () => {
       apiUrl: 'https://api.hoppscotch.io',
     } as unknown as Config;
     expect(getGraphqlUrl(config)).toBe('https://api.hoppscotch.io/graphql');
+  });
+
+  it('normalizes a trailing slash before appending the GraphQL path', () => {
+    const config = {
+      apiUrl: 'https://api.example.com/',
+    } as unknown as Config;
+    expect(getGraphqlUrl(config)).toBe('https://api.example.com/graphql');
   });
 });
 
