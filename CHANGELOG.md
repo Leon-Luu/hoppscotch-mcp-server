@@ -24,10 +24,13 @@ release and removed no sooner than the next major.
 
 ### Added
 
-- `HOPPSCOTCH_API_URL` can now explicitly set the backend API origin for
-  self-hosted deployments whose frontend and backend are served from separate
-  origins. Existing deployments that only set `HOPPSCOTCH_SERVER_URL` keep the
-  previous derived API URL behaviour.
+- Allow a custom backend API base URL through `HOPPSCOTCH_API_URL` for
+  self-hosted deployments. Existing URL derivation remains the default.
+
+### Fixed
+
+- Reject bare `?` or `#` in `HOPPSCOTCH_SERVER_URL` to prevent malformed
+  device-login URLs.
 
 ## [1.0.1] - 2026-08-31
 

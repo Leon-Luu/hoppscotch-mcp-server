@@ -178,6 +178,24 @@ describe('loadConfig', () => {
     process.env.HOPPSCOTCH_API_URL = 'not-a-url';
     expect(() => loadConfig()).toThrow(/HOPPSCOTCH_API_URL/);
   });
+
+  it.each([
+    ['HOPPSCOTCH_SERVER_URL', '?', /query string/],
+    ['HOPPSCOTCH_SERVER_URL', '#', /fragment/],
+    ['HOPPSCOTCH_API_URL', '?', /query string/],
+    ['HOPPSCOTCH_API_URL', '#', /fragment/],
+  ])('rejects %s with a bare trailing %s', (envKey, delimiter, error) => {
+    process.env[envKey] = `https://sh.example.com/backend${delimiter}`;
+    expect(() => loadConfig()).toThrow(error);
+  });
+
+  it.each([
+    ['https://api.example.com/backend/v1///', 'https://api.example.com/backend/v1/graphql'],
+    ['https://api.example.com/backend/%3F%23/', 'https://api.example.com/backend/%3F%23/graphql'],
+  ])('preserves the API base path in %s', (apiUrl, graphqlUrl) => {
+    process.env.HOPPSCOTCH_API_URL = apiUrl;
+    expect(getGraphqlUrl(loadConfig())).toBe(graphqlUrl);
+  });
 });
 
 describe('getGraphqlUrl', () => {

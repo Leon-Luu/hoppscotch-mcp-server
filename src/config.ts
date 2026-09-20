@@ -26,9 +26,7 @@ export enum ApiType {
  * Cloud:      serverUrl = https://hoppscotch.io (or www.) → apiUrl = https://api.hoppscotch.io
  * Self-hosted: serverUrl = https://your-sh.example.com   → apiUrl = https://your-sh.example.com/backend
  *
- * Self-hosted Hoppscotch uses nginx to route `/backend` to the NestJS backend service.
- * Deployments where frontend and backend live on different domains can set
- * HOPPSCOTCH_API_URL to bypass this derivation entirely.
+ * Set HOPPSCOTCH_API_URL for a different backend origin or base path.
  */
 export function deriveApiUrl(serverUrl: string, explicitApiUrl?: string): string {
   if (explicitApiUrl) return explicitApiUrl.replace(/\/+$/, '');
@@ -82,10 +80,11 @@ export function assertValidServerUrl(serverUrl: string): void {
   if (url.username || url.password) {
     throw new Error('must not contain embedded credentials');
   }
-  if (url.search) {
+  // Check href because search/hash omit bare '?' and '#' delimiters.
+  if (url.href.includes('?')) {
     throw new Error('must not contain a query string');
   }
-  if (url.hash) {
+  if (url.href.includes('#')) {
     throw new Error('must not contain a fragment');
   }
 }
@@ -95,11 +94,9 @@ export function assertValidServerUrl(serverUrl: string): void {
  *
  * HOPPSCOTCH_SERVER_URL: the Hoppscotch frontend URL.
  *   Cloud (default): https://hoppscotch.io
- *   Self-hosted:     https://your-sh.example.com  (the nginx-served frontend)
+ *   Self-hosted:     https://your-sh.example.com
  *
- * HOPPSCOTCH_API_URL: optional explicit backend API URL. When set, overrides the
- *   default derivation (serverUrl + /backend). Use this when frontend and backend
- *   are served on different domains (e.g. separate Cloud Run services).
+ * HOPPSCOTCH_API_URL: optional backend base URL that overrides URL derivation.
  *
  * HOPPSCOTCH_ACCESS_TOKEN: optional JWT to skip browser login. A `pat-…` PAT
  * does NOT work here (PATs are REST-only; the GraphQL API requires a JWT).
@@ -107,7 +104,7 @@ export function assertValidServerUrl(serverUrl: string): void {
 const configSchema = z.object({
   serverUrl: z.string().url('HOPPSCOTCH_SERVER_URL must be a valid URL').default(CLOUD_SERVER_URL),
 
-  // Derived from serverUrl or an explicit API URL
+  // API URL may be overridden. Auth type follows serverUrl.
   apiUrl: z.string(),
   apiType: z.nativeEnum(ApiType),
 

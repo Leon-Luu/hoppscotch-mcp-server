@@ -16,7 +16,7 @@ A [Model Context Protocol (MCP)](https://modelcontextprotocol.io) server that en
 - **Code generation**: generate code snippets in curl, JavaScript, Python, Go, and Rust
 - **Documentation generation**: auto-generate API documentation in Markdown
 - **REST and GraphQL collections**: personal collections and requests carry a REST/GraphQL type; team collections are untyped
-- **Cloud and self-hosted targeting**: Cloud (`hoppscotch.io`) is supported. Self-hosted mode derives the backend as `<server URL>/backend` by default, and split-origin deployments can set `HOPPSCOTCH_API_URL` explicitly. See [Cloud / self-hosted compatibility](#cloud--self-hosted-compatibility) for the verification boundary
+- **Cloud and self-hosted targeting**: Cloud (`hoppscotch.io`) is supported. Self-hosted instances use `<server URL>/backend` by default. Set `HOPPSCOTCH_API_URL` for a different backend URL. See [Cloud / self-hosted compatibility](#cloud--self-hosted-compatibility) for the verification boundary
 - **Browser-based login**: no token setup required for interactive use. Sign in through Hoppscotch's device-login page and the session is cached
 
 ## Installation
@@ -61,7 +61,7 @@ instances don't use Firebase and need nothing extra.
 **Claude Code** / **Codex**: register the server once at user scope. For a self-hosted
 instance, pass `HOPPSCOTCH_SERVER_URL` through the host's env flag (`-e` for Claude Code,
 `--env` for Codex). If the backend is not available at `<server URL>/backend`, also set
-`HOPPSCOTCH_API_URL` to the backend API origin.
+`HOPPSCOTCH_API_URL` to the backend API base URL.
 
 ```bash
 claude mcp add -s user hoppscotch -- npx -y @hoppscotch/mcp-server
@@ -97,7 +97,7 @@ For a self-hosted instance:
 }
 ```
 
-For a self-hosted instance with separate frontend and backend origins:
+For a self-hosted instance with a separate backend URL:
 
 ```json
 {
@@ -132,7 +132,7 @@ situation.
 | Variable | Default | Purpose |
 |---|---|---|
 | `HOPPSCOTCH_SERVER_URL` | `https://hoppscotch.io` | Frontend URL. Omit for Cloud; set to your instance URL for self-hosted. The device-login page opens from this URL. |
-| `HOPPSCOTCH_API_URL` | derived from `HOPPSCOTCH_SERVER_URL` | Backend API origin. Omit for Cloud and standard self-hosted deployments. Set it when the backend is served from a separate origin instead of `<server URL>/backend`. |
+| `HOPPSCOTCH_API_URL` | derived from `HOPPSCOTCH_SERVER_URL` | Overrides the backend API base URL. Include any base path, without `/graphql`. |
 | `HOPPSCOTCH_TOOL_PROFILE` | `core` | Tool surface: `minimal` (22), `core` (default, 39), `standard` (38), or `full` (53). `core` covers CRUD + request execution + codegen + read-only team discovery; `standard` swaps in team administration + advanced collection ops; `full` is everything. `core` and `standard` are separate branches of `full`, not a ladder. An unknown value falls back to `core` with a stderr warning. |
 | `HOPPSCOTCH_DEFAULT_TEAM_ID` | — | Default team ID for team-scoped tools when omitted from the call. |
 
@@ -169,7 +169,7 @@ Both default to off, so behaviour is unchanged unless you set them.
 
 > **Hardening a `.env`-loading setup.** By default a working-directory `.env` is honoured for every variable (backwards-compatible). If you run this server in an editor that may open untrusted repositories, set `HOPPSCOTCH_STRICT_ENV=true` in your MCP client's `env` block so a hostile repo `.env` can't repoint the auth target, disable the SSRF guard, or allowlist a secret-exfiltration origin.
 
-The API URL and auth mode are derived from `HOPPSCOTCH_SERVER_URL`: `hoppscotch.io` (and `www.hoppscotch.io`) → `api.hoppscotch.io` (Cloud / Firebase auth); any other host → `<server_url>/backend` (self-hosted / JWT auth). Set `HOPPSCOTCH_API_URL` to override only the backend API origin while keeping `HOPPSCOTCH_SERVER_URL` as the frontend used for device login.
+For Hoppscotch Cloud, leave both URL variables unset and sign in normally. For self-hosted instances, set `HOPPSCOTCH_SERVER_URL` to the frontend URL. Set `HOPPSCOTCH_API_URL` when the backend is not available at `<server URL>/backend`. This override does not change device login or auth mode.
 
 ## Authentication
 
@@ -211,8 +211,8 @@ If you genuinely have a browser available but detection misfires, set `HOPPSCOTC
 
 All 53 tool definitions are available in self-hosted mode (with `HOPPSCOTCH_TOOL_PROFILE=full`;
 the default `core` profile exposes 39 of them) when the backend is reachable at
-the derived `<server URL>/backend` API origin, or at the explicit
-`HOPPSCOTCH_API_URL` origin when configured. Compatibility was assessed against
+the derived `<server URL>/backend` base URL, or at the explicit
+`HOPPSCOTCH_API_URL` when configured. Compatibility was assessed against
 the current public Community Edition backend contract, not a live CE instance;
 SHE and custom backends were not available for verification. On Hoppscotch Cloud
 (`hoppscotch.io`), all but two tools were verified against a live account.
